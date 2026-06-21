@@ -11,6 +11,7 @@ module (and the tests) never requires those packages.
 
 from __future__ import annotations
 
+import inspect
 import math
 import os
 import random
@@ -246,26 +247,38 @@ def train_one(reward_mode, difficulty, seed, out_dir, save_repo=None, **hp):
 
     reward_func = build_reward_func(reward_mode)
 
-    config = GRPOConfig(
+    # GRPOConfig arg names verified against the installed TRL (1.6.0): `max_prompt_length`
+    # was REMOVED from GRPOConfig in TRL 1.x; `max_completion_length` and `beta` (KL) still
+    # exist. To stay robust to whatever TRL version Kaggle has, build the full desired kwargs
+    # from study_config and keep only the ones the installed GRPOConfig actually accepts
+    # (introspected at runtime). Frozen values that a given TRL version doesn't expose are
+    # simply not passed — never silently renamed.
+    desired = dict(
         output_dir=str(out_dir),
         num_generations=num_generations,
         per_device_train_batch_size=per_device_bs,
         gradient_accumulation_steps=grad_accum,
-        max_prompt_length=max_prompt_length,
+        max_prompt_length=max_prompt_length,    # dropped automatically if unsupported
         max_completion_length=max_completion_length,
         learning_rate=learning_rate,
-        beta=kl_beta,                       # KL coefficient
+        beta=kl_beta,                           # KL coefficient
         max_steps=max_steps,
         logging_steps=logging_steps,
         gradient_checkpointing=cfg.GRAD_CHECKPOINTING,
         max_grad_norm=cfg.GRAD_CLIP,
         fp16=cfg.USE_FP16,
         bf16=cfg.USE_BF16,
-        use_vllm=False,                     # in-process generation (single GPU)
+        use_vllm=False,                         # in-process generation (single GPU)
         seed=seed,
         report_to="none",
-        save_strategy="no",                 # we save only the LoRA adapter ourselves
+        save_strategy="no",                     # we save only the LoRA adapter ourselves
     )
+    supported = set(inspect.signature(GRPOConfig).parameters)
+    dropped = sorted(k for k in desired if k not in supported)
+    if dropped:
+        print(f"note: installed GRPOConfig does not accept {dropped} — dropping them "
+              f"(values stay frozen in study_config).")
+    config = GRPOConfig(**{k: v for k, v in desired.items() if k in supported})
 
     reward_history = []
 
