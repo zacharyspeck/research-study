@@ -78,9 +78,12 @@ def test_easy_band_properties():
         assert info["pre_money"] % 1_000_000 == 0            # $1M steps
         assert 8_000_000 <= info["pre_money"] <= 49_000_000  # $8M .. $49M
         assert 5.0 <= it["answer"] <= 55.0                   # mid-range
-    # The point of the change: answers are now usually non-round decimals,
-    # not the old clean {5,10,...,50}. Confirm non-round answers actually occur.
-    assert any(it["answer"] != round(it["answer"]) for it in d["train_easy"])
+        # New constraint: gold is clean to ONE decimal place but NOT whole,
+        # so easy measures the deal-math, not razor-precision 2-dp rounding,
+        # while staying off guessable whole numbers like {5,10,...,50}.
+        cents = round(it["answer"] * 100)
+        assert cents % 10 == 0          # second decimal digit is 0 (1-dp clean)
+        assert cents % 100 != 0         # but not a whole number
 
 
 def test_hard_band_is_messy_and_midrange():

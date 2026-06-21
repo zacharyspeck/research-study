@@ -14,14 +14,15 @@ Difficulty definitions
 ----------------------
 easy : Built *forwards* from clean, simple inputs. We pick a clean raise
        ($1.0M-$9.5M in $0.5M steps) and a clean pre-money ($8M-$49M in $1M
-       steps), then compute ownership = raise / (pre + raise) * 100 and reject
-       (resample) anything outside 5-55%. The gold answer is therefore a real,
-       usually non-round decimal (e.g. 15.79, 16.67) -- not a clean round
-       target a model could shortcut by guessing. Still short, single-sentence,
-       plain "$XM" phrasing, no distractor numbers, so it stays clearly easier
-       than the hard band. Some clean inputs put the answer's own digits in the
-       prompt (e.g. a $5M raise on a $20M pre gives 20% and "20" appears in
-       "$20M"); those candidates are dropped by the no-leakage guard, as before.
+       steps), compute ownership = raise / (pre + raise) * 100, and accept the
+       candidate only if the gold (a) is in 5-55%, (b) is clean to ONE decimal
+       place (its second decimal digit is 0, e.g. 12.5, 20.4), and (c) is NOT a
+       whole number; otherwise resample. The answer is thus reachable without
+       razor-precision rounding -- it measures the deal-math, not 2-dp rounding
+       -- yet is still not a guessable whole number like {5,10,...,50}. Short,
+       single-sentence, plain "$XM" phrasing, no distractor numbers, so it stays
+       clearly easier than the hard band. Any candidate whose answer digits land
+       in the prompt is still dropped by the no-leakage guard.
 
 hard : Same calculation, but we pick deliberately ugly raise / pre-money values
        that produce messy decimal answers (e.g. 16.03, 24.01). The numbers are
@@ -282,14 +283,17 @@ def _item(prompt: str, answer: float, difficulty: str,
 
 
 def make_easy_item(rng: random.Random, templates: list[str]):
-    """One easy item (built forwards from clean simple inputs)."""
+    """One easy item (forwards; gold clean to 1 decimal place, not whole)."""
     while True:
         raise_d = rng.choice(EASY_RAISES)
         pre_d = rng.choice(EASY_PRES)
         ownership = compute_ownership(raise_d, pre_d)
-        if EASY_MIN_OWNERSHIP <= ownership <= EASY_MAX_OWNERSHIP:
+        if not (EASY_MIN_OWNERSHIP <= ownership <= EASY_MAX_OWNERSHIP):
+            continue
+        answer = round2_half_up(ownership)
+        cents = int(Decimal(str(answer)) * 100)
+        if cents % 10 == 0 and cents % 100 != 0:   # 1-dp clean, not whole
             break
-    answer = round2_half_up(ownership)
 
     template = rng.choice(templates)
     scenario = template.format(
