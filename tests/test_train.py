@@ -9,6 +9,7 @@ import pytest
 from study_config import SYSTEM_PROMPT
 from training.train_grpo import (
     TrainableParamError,
+    adapter_is_loaded,
     build_reward_func,
     check_trainable_params,
     outputs_differ,
@@ -119,3 +120,20 @@ def test_outputs_differ():
     assert outputs_differ("identical", "identical") is False
     assert outputs_differ("  identical  ", "identical") is False   # whitespace-insensitive
     assert outputs_differ("base output", "trained output") is True
+
+
+# --------------------------------------------------------------------------- #
+# Adapter-loaded proof (LoRA weights present + non-zero)                       #
+# --------------------------------------------------------------------------- #
+def test_adapter_is_loaded_true_when_present_and_nonzero():
+    assert adapter_is_loaded({"num_lora_params": 112, "num_nonzero_lora_params": 56}) is True
+
+
+def test_adapter_is_loaded_false_when_missing():
+    # No LoRA params at all -> it's the bare base model.
+    assert adapter_is_loaded({"num_lora_params": 0, "num_nonzero_lora_params": 0}) is False
+
+
+def test_adapter_is_loaded_false_when_all_zero():
+    # LoRA params present but every one is zero -> not a usable adapter.
+    assert adapter_is_loaded({"num_lora_params": 112, "num_nonzero_lora_params": 0}) is False
