@@ -12,14 +12,16 @@ two decimals.
 
 Difficulty definitions
 ----------------------
-easy : Built by working *backwards*. We pick a clean target ownership from
-       {5,10,15,20,25,30,40,50}% and a round post-money from {$20M,$40M,$50M},
-       then back-calculate the raise and pre-money so the stated inputs yield
-       that clean answer. Short, single-sentence, plain "$XM" phrasing, no
-       distractor numbers. Answers are always mid-range (5-50%).
-       (We deliberately omit a $100M post-money here: with a $100M post-money
-       the raise in $M equals the ownership %, which would drop the answer's
-       digits straight into the prompt -- a leak.)
+easy : Built *forwards* from clean, simple inputs. We pick a clean raise
+       ($1.0M-$9.5M in $0.5M steps) and a clean pre-money ($8M-$49M in $1M
+       steps), then compute ownership = raise / (pre + raise) * 100 and reject
+       (resample) anything outside 5-55%. The gold answer is therefore a real,
+       usually non-round decimal (e.g. 15.79, 16.67) -- not a clean round
+       target a model could shortcut by guessing. Still short, single-sentence,
+       plain "$XM" phrasing, no distractor numbers, so it stays clearly easier
+       than the hard band. Some clean inputs put the answer's own digits in the
+       prompt (e.g. a $5M raise on a $20M pre gives 20% and "20" appears in
+       "$20M"); those candidates are dropped by the no-leakage guard, as before.
 
 hard : Same calculation, but we pick deliberately ugly raise / pre-money values
        that produce messy decimal answers (e.g. 16.03, 24.01). The numbers are
@@ -165,9 +167,10 @@ OOD_HARD_TEMPLATES = [
     "to {pre_money}.",
 ]
 
-# Easy band parameters.
-EASY_OWNERSHIPS = [5, 10, 15, 20, 25, 30, 40, 50]          # clean target %
-EASY_POSTMONEYS = [20_000_000, 40_000_000, 50_000_000]      # round post-money ($)
+# Easy band parameters (forwards: clean simple inputs -> usually non-round answer).
+EASY_RAISES = [n * 500_000 for n in range(2, 20)]        # $1.0M .. $9.5M, $0.5M steps
+EASY_PRES = [n * 1_000_000 for n in range(8, 50)]        # $8M .. $49M, $1M steps
+EASY_MIN_OWNERSHIP, EASY_MAX_OWNERSHIP = 5.0, 55.0       # accept band (else resample)
 
 
 # --------------------------------------------------------------------------- #
@@ -279,12 +282,13 @@ def _item(prompt: str, answer: float, difficulty: str,
 
 
 def make_easy_item(rng: random.Random, templates: list[str]):
-    """One easy item (built backwards from a clean target ownership)."""
-    target = rng.choice(EASY_OWNERSHIPS)
-    post = rng.choice(EASY_POSTMONEYS)
-    raise_d = target / 100.0 * post
-    pre_d = post - raise_d
-    ownership = compute_ownership(raise_d, pre_d)   # == target, in code
+    """One easy item (built forwards from clean simple inputs)."""
+    while True:
+        raise_d = rng.choice(EASY_RAISES)
+        pre_d = rng.choice(EASY_PRES)
+        ownership = compute_ownership(raise_d, pre_d)
+        if EASY_MIN_OWNERSHIP <= ownership <= EASY_MAX_OWNERSHIP:
+            break
     answer = round2_half_up(ownership)
 
     template = rng.choice(templates)

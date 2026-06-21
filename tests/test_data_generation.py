@@ -3,7 +3,6 @@
 import random
 
 from data_generation.generate import (
-    EASY_OWNERSHIPS,
     INSTRUCTION,
     OOD_EASY_TEMPLATES,
     OOD_HARD_TEMPLATES,
@@ -72,8 +71,16 @@ def test_prompts_contain_instruction_but_not_percent():
 def test_easy_band_properties():
     d = _build()
     for it in d["train_easy"]:
-        assert it["answer"] in EASY_OWNERSHIPS          # clean target
-        assert 5 <= it["answer"] <= 50                  # mid-range
+        info = it["info"]
+        # Built forwards from clean simple inputs (no distractors, clean $XM):
+        assert info["raise"] % 500_000 == 0                  # $0.5M steps
+        assert 1_000_000 <= info["raise"] <= 9_500_000       # $1.0M .. $9.5M
+        assert info["pre_money"] % 1_000_000 == 0            # $1M steps
+        assert 8_000_000 <= info["pre_money"] <= 49_000_000  # $8M .. $49M
+        assert 5.0 <= it["answer"] <= 55.0                   # mid-range
+    # The point of the change: answers are now usually non-round decimals,
+    # not the old clean {5,10,...,50}. Confirm non-round answers actually occur.
+    assert any(it["answer"] != round(it["answer"]) for it in d["train_easy"])
 
 
 def test_hard_band_is_messy_and_midrange():
