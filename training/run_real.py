@@ -11,8 +11,16 @@ deferred into the functions that need them (no GPU needed to import this module)
 
 from __future__ import annotations
 
-import json
+# Memory-fragmentation fix for the 16GB T4 — set BEFORE torch is imported anywhere
+# (here at module import, so every entry point gets it without a manual Kaggle cell).
+# expandable_segments lets the CUDA allocator return freed blocks, avoiding the
+# fragmentation OOM the full-config calibration run hit. None of the imports below
+# pull in torch (train_grpo defers it), so this executes before torch initializes.
 import os
+
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
+import json
 import re
 import subprocess
 import sys

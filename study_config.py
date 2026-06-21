@@ -50,14 +50,14 @@ LORA_TARGET_MODULES = ["q_proj", "k_proj", "v_proj", "o_proj",
                        "gate_proj", "up_proj", "down_proj"]
 
 # GRPO (TRL GRPOConfig).
-NUM_GENERATIONS = 6                   # group size G
+NUM_GENERATIONS = 4                   # group size G (trimmed 6->4 to fit the 16GB T4)
 LEARNING_RATE = 1e-5
 KL_BETA = 0.04                        # KL coefficient (GRPOConfig.beta)
 MAX_PROMPT_LENGTH = 512
-MAX_COMPLETION_LENGTH = 512
+MAX_COMPLETION_LENGTH = 384           # trimmed 512->384 to fit the 16GB T4
 GRAD_CHECKPOINTING = True
 GRAD_CLIP = 1.0                       # max_grad_norm
-GRADIENT_ACCUMULATION_STEPS = 4
+GRADIENT_ACCUMULATION_STEPS = 6       # 4->6 so effective batch (4 gen x 6) ~ prior (6 gen x 4)
 TRAIN_EXAMPLES = 256                  # total training items; held FIXED across the
                                       # easy vs easy_hard conditions (only the mix changes)
 MAX_STEPS = 200                       # draft cap for a real run
