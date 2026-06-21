@@ -66,6 +66,7 @@ import argparse
 import json
 import random
 import re
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 # --------------------------------------------------------------------------- #
@@ -178,6 +179,17 @@ def compute_ownership(raise_d: float, pre_d: float) -> float:
     return raise_d / post * 100.0
 
 
+def round2_half_up(value: float) -> float:
+    """Round to 2 decimals using half-up, matching the strict grader.
+
+    The grader normalizes model outputs with
+    ``Decimal(str(x)).quantize(Decimal("0.01"), ROUND_HALF_UP)``; gold answers
+    are rounded the same way so boundary values (e.g. 15.625 -> 15.63,
+    18.125 -> 18.13) agree instead of diverging under banker's rounding.
+    """
+    return float(Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
 def fmt_easy(value_dollars: float) -> str:
     """Standard "$XM" formatting for the easy band (e.g. $20M, $2.5M)."""
     return f"${value_dollars / 1e6:g}M"
@@ -273,7 +285,7 @@ def make_easy_item(rng: random.Random, templates: list[str]):
     raise_d = target / 100.0 * post
     pre_d = post - raise_d
     ownership = compute_ownership(raise_d, pre_d)   # == target, in code
-    answer = round(ownership, 2)
+    answer = round2_half_up(ownership)
 
     template = rng.choice(templates)
     scenario = template.format(
@@ -296,7 +308,7 @@ def make_hard_item(rng: random.Random, templates: list[str]):
         if round(ownership * 100) % 50 == 0:   # reject clean .00 / .50
             continue
         break
-    answer = round(ownership, 2)
+    answer = round2_half_up(ownership)
 
     fill = make_distractors(rng)
     fill.update(
