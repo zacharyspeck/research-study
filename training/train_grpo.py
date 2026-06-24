@@ -374,10 +374,11 @@ def train_one(reward_mode, difficulty, seed, out_dir, save_repo=None, task="A", 
     }
 
 
-def _greedy_generate(model, tokenizer, user_prompt, max_new_tokens=128):
+def _greedy_generate(model, tokenizer, user_prompt, max_new_tokens=128, system_prompt=None):
     import torch
     messages = [
-        {"role": "system", "content": cfg.SYSTEM_PROMPT},
+        # Default (system_prompt=None) is cfg.SYSTEM_PROMPT, byte-identical to before.
+        {"role": "system", "content": cfg.SYSTEM_PROMPT if system_prompt is None else system_prompt},
         {"role": "user", "content": user_prompt},
     ]
     text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
@@ -412,7 +413,21 @@ def _lora_weight_stats(model):
     }
 
 
-def prove_adapter_loaded(base_model_id, adapter_src, probe_prompt, max_new_tokens=128):
+def probe_system_prompt(task="A", system_prompt=None):
+    """Resolve the SYSTEM prompt for the adapter-proof probe (pure).
+
+    Explicit ``system_prompt`` wins; otherwise it is the task's frozen prompt
+    (``task_spec(task).system_prompt``). The default (task='A', system_prompt=None) is
+    ``cfg.SYSTEM_PROMPT`` — byte-identical to the old hard-coded behavior — so a Task-A
+    probe is unchanged while a Task-B probe shows real JSON extraction (SYSTEM_PROMPT_B).
+    """
+    if system_prompt is not None:
+        return system_prompt
+    return task_spec(task).system_prompt
+
+
+def prove_adapter_loaded(base_model_id, adapter_src, probe_prompt, max_new_tokens=128,
+                         task="A", system_prompt=None):
     """Prove a trained adapter actually loaded.
 
     The REAL proof is that the LoRA adapter weights are present and non-zero after
@@ -421,10 +436,17 @@ def prove_adapter_loaded(base_model_id, adapter_src, probe_prompt, max_new_token
     legitimately produce identical greedy text, so identical text is NOT a failure.
     We hard-fail only if the adapter weights are missing or all-zero.
     ``adapter_src`` may be a local path OR an HF repo id.
+
+    The probe's SYSTEM prompt is task-aware (``task`` / ``system_prompt``): it defaults to
+    Task A's ``cfg.SYSTEM_PROMPT`` (unchanged), but a Task-B probe (task='B') uses
+    SYSTEM_PROMPT_B so the transcript reflects extraction, not Task-A math. The proof verdict
+    is task-agnostic (LoRA weights) and unaffected by the prompt.
     """
     import torch
     from peft import PeftModel
     from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    sp = probe_system_prompt(task, system_prompt)
 
     tokenizer = AutoTokenizer.from_pretrained(base_model_id)
     if tokenizer.pad_token_id is None:
@@ -433,7 +455,7 @@ def prove_adapter_loaded(base_model_id, adapter_src, probe_prompt, max_new_token
 
     base = AutoModelForCausalLM.from_pretrained(base_model_id, torch_dtype=torch.float16).to(device)
     base.eval()
-    base_output = _greedy_generate(base, tokenizer, probe_prompt, max_new_tokens)
+    base_output = _greedy_generate(base, tokenizer, probe_prompt, max_new_tokens, system_prompt=sp)
     del base
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
@@ -441,7 +463,7 @@ def prove_adapter_loaded(base_model_id, adapter_src, probe_prompt, max_new_token
     base2 = AutoModelForCausalLM.from_pretrained(base_model_id, torch_dtype=torch.float16).to(device)
     adapted = PeftModel.from_pretrained(base2, adapter_src).to(device)
     adapted.eval()
-    adapter_output = _greedy_generate(adapted, tokenizer, probe_prompt, max_new_tokens)
+    adapter_output = _greedy_generate(adapted, tokenizer, probe_prompt, max_new_tokens, system_prompt=sp)
 
     # Real proof: LoRA weights present and non-zero.
     lora_stats = _lora_weight_stats(adapted)

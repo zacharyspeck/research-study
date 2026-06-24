@@ -16,6 +16,7 @@ from training.train_grpo import (
     build_reward_func,
     check_trainable_params,
     outputs_differ,
+    probe_system_prompt,
     rewards_all_identical,
     task_completion_length,
     to_grpo_dataset,
@@ -36,6 +37,16 @@ def test_task_completion_length_taskB_uses_locked_override(monkeypatch):
     monkeypatch.setattr(cfg, "MAX_COMPLETION_LENGTH_B", None)             # falls back if unset
     assert task_completion_length("B") == cfg.MAX_COMPLETION_LENGTH
     assert task_completion_length("A") == cfg.MAX_COMPLETION_LENGTH       # A never affected
+
+
+def test_probe_system_prompt_task_aware_default_unchanged():
+    # default + explicit task='A' are byte-identical to the old hard-coded cfg.SYSTEM_PROMPT
+    assert probe_system_prompt() == cfg.SYSTEM_PROMPT == SYSTEM_PROMPT
+    assert probe_system_prompt("A") == SYSTEM_PROMPT
+    # task='B' uses the JSON prompt -> a Task-B probe shows extraction, not Task-A math
+    assert probe_system_prompt("B") == SYSTEM_PROMPT_B and probe_system_prompt("B") != SYSTEM_PROMPT
+    # an explicit system_prompt overrides the task
+    assert probe_system_prompt("B", system_prompt="custom probe") == "custom probe"
 
 
 def test_taskB_reward_uses_grader_b_and_json_gold_roundtrip():
