@@ -1,0 +1,229 @@
+PHASE-6 PART-1 RUN -- git commit (repro/traceability): 95c5eefee6ef37c1f6a8e8934789c5e84df7d47c
+input A (Task A) = C:/Users/speck/research-study/judge_results
+input B (Task B) = C:/Users/speck/research-study/judge_taskB
+
+################################################################################################
+PHASE-6 PART-1 VERIFICATION GATES  (real Task A + real Task B; read-only)
+################################################################################################
+
+[GATE 1] PATH / INGEST
+  Task A dir: C:/Users/speck/research-study/judge_results
+  Task B dir: C:/Users/speck/research-study/judge_taskB
+  Task A *//results.json ingested: 13
+  Task B *//results.json ingested: 13
+  _worst_gap_loose_easy_hard.txt present in repo: True | ingested by glob: 0 (must be 0)
+  detected task A dir -> A | B dir -> B
+
+[GATE 2] PLACEHOLDER OFF + 12 CELLS PER TASK
+  Task A trained cell-runs (4 cells x 3 seeds): 12
+    per-cell seeds: {'loose-easy': [0, 1, 2], 'loose-easy_hard': [0, 1, 2], 'strict-easy': [0, 1, 2], 'strict-easy_hard': [0, 1, 2]}
+  Task B trained cell-runs (4 cells x 3 seeds): 12
+    per-cell seeds: {'loose-easy': [0, 1, 2], 'loose-easy_hard': [0, 1, 2], 'strict-easy': [0, 1, 2], 'strict-easy_hard': [0, 1, 2]}
+  res_b present (placeholder turns OFF): True
+  'Task B pending' placeholder in output: False (must be False)
+  real CROSS-TASK section present: True (must be True)
+
+[GATE 3] RECONCILE — Task B HARD-band all5_pct vs exam table (within rounding)
+  cell               re-derived(mean±std)   exam(mean±std)         verdict
+  strict-easy        19.0±0.0               19.0±0.0               MATCH
+  strict-easy_hard   59.3±5.7               59.3±5.7               MATCH
+  loose-easy         17.3±0.6               17.3±0.6               MATCH
+  loose-easy_hard    58.3±2.1               58.3±2.1               MATCH
+  easy-band all5 (sanity, expect ~93-95):
+    strict-easy        93.7±1.2 
+    strict-easy_hard   95.0±4.0 
+    loose-easy         94.7±2.1 
+    loose-easy_hard    93.7±4.0 
+  RECONCILE: PASS
+
+[GATE 4] LIKE-TO-LIKE (A strict_pct <-> B all5_pct; never B strict_mean_pct)
+  headline_A = strict_pct ( strict exact-match )
+  headline_B = all5_pct ( all-5-exact (record correctness) )
+  --- exact output lines proving the pairing: ---
+    |Task A headline = strict_pct   |   Task B headline = all5_pct
+    |Task A (strict_pct):
+    |Task B (all5_pct):
+    |Task A (strict_pct):
+    |Task B (all5_pct):
+  Task B per-field-mean (strict_mean_pct) used in a cross-task comparison line: False (must be False)
+
+[GATE 5] EVERY dial-effect delta has spread (±) AND a null/overlap flag
+  total delta lines: 24
+  with spread (±): 24 | with explicit flag: 24
+  NULL (overlap, no-effect): 15 | disjoint (signed delta): 9
+  --- the NULL findings (surfaced, not suppressed): ---
+    |hard : Δ=-0.3pp   [strict-easy 10.0±2.0  vs  loose-easy 9.7±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+    |hard : Δ=+1.7pp   [strict-easy_hard 11.0±1.0  vs  loose-easy_hard 12.7±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+    |hard : Δ=+1.0pp   [strict-easy 10.0±2.0  vs  strict-easy_hard 11.0±1.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    |easy : Δ=+0.0pp   [loose-easy 61.0±1.0  vs  loose-easy_hard 61.0±1.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    |hard : Δ=+3.0pp   [loose-easy 9.7±2.1  vs  loose-easy_hard 12.7±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+    |easy : Δ=+1.0pp   [strict-easy 93.7±1.2  vs  loose-easy 94.7±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+    |easy : Δ=-1.3pp   [strict-easy_hard 95.0±4.0  vs  loose-easy_hard 93.7±4.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    |hard : Δ=-1.0pp   [strict-easy_hard 59.3±5.7  vs  loose-easy_hard 58.3±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+    |easy : Δ=+1.3pp   [strict-easy 93.7±1.2  vs  strict-easy_hard 95.0±4.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    |easy : Δ=-1.0pp   [loose-easy 94.7±2.1  vs  loose-easy_hard 93.7±4.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    |hard : Δ=+1.7pp   [strict-easy_hard 11.0±1.0  vs  loose-easy_hard 12.7±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+    |easy : Δ=-1.3pp   [strict-easy_hard 95.0±4.0  vs  loose-easy_hard 93.7±4.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    |hard : Δ=-1.0pp   [strict-easy_hard 59.3±5.7  vs  loose-easy_hard 58.3±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+    |hard : Δ=+1.0pp   [strict-easy 10.0±2.0  vs  strict-easy_hard 11.0±1.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    |easy : Δ=+1.3pp   [strict-easy 93.7±1.2  vs  strict-easy_hard 95.0±4.0]  NULL: intervals overlap — no effect detected (n=3, small)
+
+[GATE 6] PER-BAND (no blend) + BASELINE separate
+  BANDS reported separately: ('easy', 'hard') (no band-blended metric path exists)
+  Task A baseline present: True | is_baseline: True | baseline seed: -1
+    baseline seed leaked into trained cells: False (must be False)
+  Task B baseline present: True | is_baseline: True | baseline seed: -1
+    baseline seed leaked into trained cells: False (must be False)
+
+[GATE 7] dial_effect one-dial guardrail (deliberately trip it; do NOT loosen it)
+  calling dial_effect(res_b, 'strict-easy', 'loose-easy_hard', 'all5_pct')  [2 dials differ]
+  guardrail FIRED as designed. Full message:
+    ValueError: dial_effect requires cells differing in EXACTLY ONE dial; strict-easy vs loose-easy_hard differ in 2: ['reward_mode', 'difficulty']
+
+################################################################################################
+ALL CRITICAL GATES PASSED.
+################################################################################################
+
+
+
+================================================================================================
+FULL analyze_cross_task.analyze() REPORT  (verbatim; tables + deltas + flags)
+================================================================================================
+PHASE-6 CROSS-TASK ANALYSIS  (measures + compares; draws NO verdict; nulls reported as cleanly as effects; spread = sample std ddof=1, n=3)
+
+================================================================================================
+PER-TASK TABLE — Task A  (HEADLINE = strict exact-match; mean ± std over 3 seeds)
+================================================================================================
+cell              band          strict_pct  format_valid_pct         loose_pct         passk_pct
+strict-easy       easy            79.7±3.5         100.0±0.0          99.3±1.2          85.7±2.5
+strict-easy       hard            10.0±2.0         100.0±0.0          83.0±1.7          18.7±2.9
+strict-easy_hard  easy            69.7±0.6         100.0±0.0          99.0±1.0          78.3±2.5
+strict-easy_hard  hard            11.0±1.0         100.0±0.0          80.0±1.0          17.0±1.0
+loose-easy        easy            61.0±1.0         100.0±0.0         100.0±0.0          68.3±4.5
+loose-easy        hard             9.7±2.1         100.0±0.0          81.7±2.3          16.3±2.9
+loose-easy_hard   easy            61.0±1.0         100.0±0.0         100.0±0.0          67.0±1.0
+loose-easy_hard   hard            12.7±2.1         100.0±0.0          90.0±2.6          17.3±1.5
+
+------------------------------------------------------------------------------------------------
+DIAL EFFECTS — Task A (headline = strict_pct); deltas + null flags only, NO winner.
+------------------------------------------------------------------------------------------------
+REWARD dial (strict->loose), task fixed — per band below (deltas + null flags; NO verdict):
+  difficulty=easy:
+    easy : Δ=-18.7pp   [strict-easy 79.7±3.5  vs  loose-easy 61.0±1.0]  intervals disjoint — signed delta only, not a verdict
+    hard : Δ=-0.3pp   [strict-easy 10.0±2.0  vs  loose-easy 9.7±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+  difficulty=easy_hard:
+    easy : Δ=-8.7pp   [strict-easy_hard 69.7±0.6  vs  loose-easy_hard 61.0±1.0]  intervals disjoint — signed delta only, not a verdict
+    hard : Δ=+1.7pp   [strict-easy_hard 11.0±1.0  vs  loose-easy_hard 12.7±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+TASK dial (easy->easy_hard), reward fixed:
+  reward=strict:
+    easy : Δ=-10.0pp   [strict-easy 79.7±3.5  vs  strict-easy_hard 69.7±0.6]  intervals disjoint — signed delta only, not a verdict
+    hard : Δ=+1.0pp   [strict-easy 10.0±2.0  vs  strict-easy_hard 11.0±1.0]  NULL: intervals overlap — no effect detected (n=3, small)
+  reward=loose:
+    easy : Δ=+0.0pp   [loose-easy 61.0±1.0  vs  loose-easy_hard 61.0±1.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    hard : Δ=+3.0pp   [loose-easy 9.7±2.1  vs  loose-easy_hard 12.7±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+
+------------------------------------------------------------------------------------------------
+REWARD-HACKING GAP CONCENTRATION — Task A (loose-strict, per cell/band); magnitudes only.
+------------------------------------------------------------------------------------------------
+  loose-easy_hard/hard               gap = 77.3±2.5 pp
+  strict-easy/hard                   gap = 73.0±1.0 pp
+  loose-easy/hard                    gap = 72.0±1.7 pp
+  strict-easy_hard/hard              gap = 69.0±1.0 pp
+  loose-easy/easy                    gap = 39.0±1.0 pp
+  loose-easy_hard/easy               gap = 39.0±1.0 pp
+  strict-easy_hard/easy              gap = 29.3±1.5 pp
+  strict-easy/easy                   gap = 19.7±3.8 pp
+
+------------------------------------------------------------------------------------------------
+TRAINED vs UNTRAINED — Task A (trained vs UNTRAINED baseline (did training help) — NOT a dial effect); separate from dial effects.
+------------------------------------------------------------------------------------------------
+  strict-easy       easy: 56.0->79.7 (Δ+23.7)   hard: 9.0->10.0 (Δ+1.0)
+  strict-easy_hard  easy: 56.0->69.7 (Δ+13.7)   hard: 9.0->11.0 (Δ+2.0)
+  loose-easy        easy: 56.0->61.0 (Δ+5.0)   hard: 9.0->9.7 (Δ+0.7)
+  loose-easy_hard   easy: 56.0->61.0 (Δ+5.0)   hard: 9.0->12.7 (Δ+3.7)
+
+================================================================================================
+PER-TASK TABLE — Task B  (HEADLINE = all-5-exact (record correctness); mean ± std over 3 seeds)
+================================================================================================
+cell              band            all5_pct   strict_mean_pct  format_valid_pct    passk_all5_pct   passk_field_pct   [Task B: strict_mean_pct is the per-field-mean DIAGNOSTIC, not the headline]
+strict-easy       easy            93.7±1.2          98.3±0.5         100.0±0.0          98.0±1.7          99.4±0.5
+strict-easy       hard            19.0±0.0          63.7±0.8         100.0±0.0          28.0±2.0          70.5±0.8
+strict-easy_hard  easy            95.0±4.0          98.7±1.1         100.0±0.0          98.0±1.7          99.5±0.5
+strict-easy_hard  hard            59.3±5.7          81.3±2.6         100.0±0.0          73.3±5.7          88.5±3.1
+loose-easy        easy            94.7±2.1          98.6±0.7         100.0±0.0          98.3±2.1          99.5±0.6
+loose-easy        hard            17.3±0.6          63.4±1.0         100.0±0.0          27.7±0.6          70.3±0.7
+loose-easy_hard   easy            93.7±4.0          98.3±1.1         100.0±0.0          97.0±3.5          99.2±1.0
+loose-easy_hard   hard            58.3±2.1          81.3±1.3         100.0±0.0          72.3±3.8          88.9±1.5
+
+per-field strict (Task B DIAGNOSTIC — never the headline):
+  strict-easy       easy  com=100.0±0.0  fou=100.0±0.0  rai=94.3±0.6  rou=100.0±0.0  val=97.0±1.7
+  strict-easy       hard  com=100.0±0.0  fou=70.7±2.9  rai=41.7±0.6  rou=45.7±0.6  val=60.7±0.6
+  strict-easy_hard  easy  com=100.0±0.0  fou=99.7±0.6  rai=95.7±3.5  rou=100.0±0.0  val=98.3±2.1
+  strict-easy_hard  hard  com=100.0±0.0  fou=96.0±0.0  rai=63.3±5.7  rou=64.3±5.5  val=83.0±1.7
+  loose-easy        easy  com=100.0±0.0  fou=100.0±0.0  rai=95.3±1.5  rou=100.0±0.0  val=97.7±2.1
+  loose-easy        hard  com=100.0±0.0  fou=68.0±1.7  rai=42.3±0.6  rou=45.3±0.6  val=61.3±2.3
+  loose-easy_hard   easy  com=100.0±0.0  fou=100.0±0.0  rai=95.0±2.6  rou=100.0±0.0  val=96.3±2.9
+  loose-easy_hard   hard  com=100.0±0.0  fou=97.3±1.5  rai=64.0±4.4  rou=65.7±4.9  val=79.7±1.2
+
+------------------------------------------------------------------------------------------------
+DIAL EFFECTS — Task B (headline = all5_pct); deltas + null flags only, NO winner.
+------------------------------------------------------------------------------------------------
+REWARD dial (strict->loose), task fixed — per band below (deltas + null flags; NO verdict):
+  difficulty=easy:
+    easy : Δ=+1.0pp   [strict-easy 93.7±1.2  vs  loose-easy 94.7±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+    hard : Δ=-1.7pp   [strict-easy 19.0±0.0  vs  loose-easy 17.3±0.6]  intervals disjoint — signed delta only, not a verdict
+  difficulty=easy_hard:
+    easy : Δ=-1.3pp   [strict-easy_hard 95.0±4.0  vs  loose-easy_hard 93.7±4.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    hard : Δ=-1.0pp   [strict-easy_hard 59.3±5.7  vs  loose-easy_hard 58.3±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+TASK dial (easy->easy_hard), reward fixed:
+  reward=strict:
+    easy : Δ=+1.3pp   [strict-easy 93.7±1.2  vs  strict-easy_hard 95.0±4.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    hard : Δ=+40.3pp   [strict-easy 19.0±0.0  vs  strict-easy_hard 59.3±5.7]  intervals disjoint — signed delta only, not a verdict
+  reward=loose:
+    easy : Δ=-1.0pp   [loose-easy 94.7±2.1  vs  loose-easy_hard 93.7±4.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    hard : Δ=+41.0pp   [loose-easy 17.3±0.6  vs  loose-easy_hard 58.3±2.1]  intervals disjoint — signed delta only, not a verdict
+
+------------------------------------------------------------------------------------------------
+REWARD-HACKING GAP CONCENTRATION — Task B (loose-strict, per FIELD per band); magnitudes only.
+------------------------------------------------------------------------------------------------
+  strict-easy/hard/valuation         gap = 14.3±0.6 pp
+  loose-easy/hard/valuation          gap = 14.3±1.2 pp
+  loose-easy_hard/hard/valuation     gap = 7.3±1.5 pp
+  strict-easy_hard/hard/valuation    gap = 4.0±1.0 pp
+  strict-easy/easy/company           gap = 0.0±0.0 pp
+  strict-easy/easy/founders          gap = 0.0±0.0 pp
+  strict-easy/easy/raise             gap = 0.0±0.0 pp
+  strict-easy/easy/round             gap = 0.0±0.0 pp
+  strict-easy/easy/valuation         gap = 0.0±0.0 pp
+  strict-easy/hard/company           gap = 0.0±0.0 pp
+  strict-easy/hard/founders          gap = 0.0±0.0 pp
+  strict-easy/hard/raise             gap = 0.0±0.0 pp
+
+------------------------------------------------------------------------------------------------
+TRAINED vs UNTRAINED — Task B (trained vs UNTRAINED baseline (did training help) — NOT a dial effect); separate from dial effects.
+------------------------------------------------------------------------------------------------
+  strict-easy       easy: 78.0->93.7 (Δ+15.7)   hard: 16.0->19.0 (Δ+3.0)
+  strict-easy_hard  easy: 78.0->95.0 (Δ+17.0)   hard: 16.0->59.3 (Δ+43.3)
+  loose-easy        easy: 78.0->94.7 (Δ+16.7)   hard: 16.0->17.3 (Δ+1.3)
+  loose-easy_hard   easy: 78.0->93.7 (Δ+15.7)   hard: 16.0->58.3 (Δ+42.3)
+
+================================================================================================
+CROSS-TASK (side by side) — side-by-side; each task uses its OWN headline (A: strict exact-match, B: all-5-exact). One slice each (reward dial at difficulty=easy_hard; task dial at reward=strict) — see the per-task DIAL EFFECTS for all slices. No agreement conclusion is drawn.
+Task A headline = strict_pct   |   Task B headline = all5_pct
+================================================================================================
+
+[reward dial (strict->loose, difficulty=easy_hard)]
+  Task A (strict_pct):
+    easy : Δ=-8.7pp   [strict-easy_hard 69.7±0.6  vs  loose-easy_hard 61.0±1.0]  intervals disjoint — signed delta only, not a verdict
+    hard : Δ=+1.7pp   [strict-easy_hard 11.0±1.0  vs  loose-easy_hard 12.7±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+  Task B (all5_pct):
+    easy : Δ=-1.3pp   [strict-easy_hard 95.0±4.0  vs  loose-easy_hard 93.7±4.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    hard : Δ=-1.0pp   [strict-easy_hard 59.3±5.7  vs  loose-easy_hard 58.3±2.1]  NULL: intervals overlap — no effect detected (n=3, small)
+
+[task dial (easy->easy_hard, reward=strict)]
+  Task A (strict_pct):
+    easy : Δ=-10.0pp   [strict-easy 79.7±3.5  vs  strict-easy_hard 69.7±0.6]  intervals disjoint — signed delta only, not a verdict
+    hard : Δ=+1.0pp   [strict-easy 10.0±2.0  vs  strict-easy_hard 11.0±1.0]  NULL: intervals overlap — no effect detected (n=3, small)
+  Task B (all5_pct):
+    easy : Δ=+1.3pp   [strict-easy 93.7±1.2  vs  strict-easy_hard 95.0±4.0]  NULL: intervals overlap — no effect detected (n=3, small)
+    hard : Δ=+40.3pp   [strict-easy 19.0±0.0  vs  strict-easy_hard 59.3±5.7]  intervals disjoint — signed delta only, not a verdict
