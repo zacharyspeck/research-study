@@ -229,6 +229,17 @@ Metrics are always split into `easy` and `hard` bands, never blended:
 
 The cross-seed comparison table (4 cells × {easy, hard} bands, mean ± sample std over 3 seeds) is emitted only when all 12 runs are present. Final interpretation — which dial setting "won," and whether the effect transfers across tasks — is deferred to the Phase-6 cross-task step, which itself reports nulls and overlaps and names no winner.
 
+## Published RL environments
+
+Both tasks are packaged as self-contained verifiers environments (under `environments/`) and published on the Prime Intellect Environments Hub:
+
+- **vc-deal-math** — Task A: messy funding-round prose → one computed ownership %.
+  Hub: https://app.primeintellect.ai/dashboard/environments/zachspeck/vc-deal-math
+  Install: `prime env install zachspeck/vc-deal-math`
+- **vc-deal-extraction** — Task B: messy prose → a 5-field JSON record.
+  Hub: https://app.primeintellect.ai/dashboard/environments/zachspeck/vc-deal-extraction
+  Install: `prime env install zachspeck/vc-deal-extraction`
+
 ## Status / caveats
 
 - **Scoring is rule-based, not an LLM judge.** Every metric comes from the deterministic graders in `graders/`; the "judge" only re-generates text and scores it. The graders are pure and unit-tested without a model.
